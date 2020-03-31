@@ -190,7 +190,7 @@ int dup2(int fd, int fd2);
 /* Both return: new file descriptor if OK, −1 on error */
 ```
 `dup`  返回的新文件描述符一定是当前可用文件描述符中最小值。  
-`dup2` 使用fd2，若fd2已经打开，则先关闭。若fd = fd2 ，返回fd2，而不关闭。否则，fd2的FD_CLOEXEC文件描述符标志就被清除。这样调用exec时时打开状态。  
+`dup2` 使用fd2，若fd2已经打开，则先关闭。若fd = fd2 ，返回fd2，而不关闭。否则，fd2的FD_CLOEXEC文件描述符标志就被清除。这样调用exec时是打开状态。  
 ![共享同一个文件表项](./img/figure_3.9_600.png)  
 
 假设我们执行了 `newfd = dup(1)`  
