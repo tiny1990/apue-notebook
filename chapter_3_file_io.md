@@ -166,5 +166,39 @@ if (write(fd, buf, 100) != 100) /* and write */
 UNIX系统提供了一个原子的操作方法，打开文件时，设置APPEND标示。每次内核写操作之前，都将进程当前偏移量设置到文件的尾端处，不用每次写之前调用lseek。
 
 ### 函数pread 和 pwrite
+```c
+#include <unistd.h>
+
+ssize_t pread(int fd, void *buf, size_t nbytes, off_t offset);
+/* Returns: number of bytes read, 0 if end of file, −1 on error */
+
+ssize_t pwrite(int fd, const void *buf, size_t nbytes, off_t offset);
+/* Returns: number of bytes written if OK, −1 on error */
+```
+调用pread相当于调用lseek后调用read，但是pread与顺序调用有区别:
+- 调用pread时，无法中断其定位和读操作
+- 不更新当前文件的偏移量
+
+## 函数dup 和 dup2
+两个函数能复制一个现有的文件描述符:
+```c
+#include <unistd.h>
+
+int dup(int fd);
+int dup2(int fd, int fd2);
+
+/* Both return: new file descriptor if OK, −1 on error */
+```
+`dup`  返回的新文件描述符一定是当前可用文件描述符中最小值。  
+`dup2` 使用fd2，若fd2已经打开，则先关闭。若fd = fd2 ，返回fd2，而不关闭。否则，fd2的FD_CLOEXEC文件描述符标志就被清除。这样调用exec时时打开状态。  
+![共享同一个文件表项](./img/figure_3.9_600.png)  
+
+假设我们执行了 `newfd = dup(1)`  
+等效于调用 `fcntl(fd, F_DUPFD, 0);`
+而调用 `dup2(fd, fd2);` 
+等效于 `close(fd2); fcntl(fd, F_DUPFD, fd2);`  
+dup2 不完全等效于 close + fcntl 主要:  
+- dup2 是原子操作
+- dup2 和 fcntl 的返回errno不同
 
 
