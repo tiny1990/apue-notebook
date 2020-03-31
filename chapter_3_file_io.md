@@ -227,7 +227,7 @@ void sync(void);
 > linux 实现中/dev/fd是个例外。它把文件描述符映射成指向底层物理文件的符号链接。例如，当打开/dev/fd/0时，事实上正在打开与标准输入关联的文件，因此返回的新描述符的模式与/dev/fd文件描述符的模式其实并不相关。  
 
 在bsh，ksh中，digit1 > digit2 表示要将描述符digit1重定向至描述符digit2的同一文件。  
-- `./a.out > outfile 2>&1`
+- `./a.out > outfile 2>&1`  
   把标准输出写到 outfile，把错误重定向到1
 - `./a.out 2>&1 > outfile`  
   把标准错误重定向到标准输出(终端)，把标准输出到outfile
