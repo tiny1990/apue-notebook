@@ -153,3 +153,18 @@ linux使用不同缓冲长度进行读操作的时间结果
 - `lseek`不会引起I/O操作
 - `fork`和`dup` 父进程，子进程共享同一个文件表项
 
+## 原子操作
+### 追加到一个文件
+早期的UNIX不支持open的APPEND，所以追加文件这样:
+```c
+if (lseek(fd, 0L, 2) < 0) /* position to EOF, 2 means SEEK_END */
+    err_sys("lseek error");
+if (write(fd, buf, 100) != 100) /* and write */
+    err_sys("write error");
+```
+当多进程追加文件时，可能出现被覆盖问题。主要问题出现在 先定位，后追加。  
+UNIX系统提供了一个原子的操作方法，打开文件时，设置APPEND标示。每次内核写操作之前，都将进程当前偏移量设置到文件的尾端处，不用每次写之前调用lseek。
+
+### 函数pread 和 pwrite
+
+
