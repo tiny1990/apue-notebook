@@ -71,3 +71,62 @@ lseek仅将当前偏移量记录内核中，不会引起任何I/O操作。
 文件偏移量大于文件当前长度，对下一次写将加长该文件，并在文件中构成空洞，没有写过的字节被读为0。  
 可以用`od -c`命令打印文件内容。  
 
+## `read` 函数
+```c
+#include <unistd.h>
+
+ssize_t read(int fd, void *buf, size_t nbytes);
+
+/* Returns: number of bytes read, 0 if end of file, −1 on error */
+```
+read成功，返回读到字节数，如果达到文件尾端，返回0  
+多数情况下，实际读到的字节数少于要求读的字节数:
+- 普通文件: 在读到要求字节数之前已经达到了文件末端
+- 终端设备: 通常一次最多读一行
+- 网络: 网络中的缓存机制可能造成返回值小于所要求读的字节数
+- 管道和FIFO: 若管道包含字节数少于所需数量，返回实际可用字节数
+- 面向记录设备: 一次最多返回一个记录
+
+## `write` 函数
+```c
+#include <unistd.h>
+
+ssize_t write(int fd, const void *buf, size_t nbytes);
+
+/* Returns: number of bytes written if OK, −1 on error */
+```
+返回值和参数nbytes相同，否则表示出错。write出错的常见原因是磁盘写满，或者超过了给定进程文件长度。
+
+## I/O 效率
+```c
+#include "apue.h"
+
+#define BUFFSIZE 4096
+
+int
+main(void)
+{
+    int n;
+    char buf[BUFFSIZE];
+
+    while ((n = read(STDIN_FILENO, buf, BUFFSIZE)) > 0)
+    if (write(STDOUT_FILENO, buf, n) != n)
+        err_sys("write error");
+
+    if (n < 0)
+        err_sys("read error");
+
+    exit(0);
+}
+```
+- 从标准输入读，写到标准输出。
+- 考虑到进程终止，内核会关闭所有打开的文件描述符，所以此程序并不关闭输入输出文件
+- 对于UNIX，文本和二进制文件并无区别
+
+linux使用不同缓冲长度进行读操作的时间结果  
+![linux 时间对比](./img/figure_3.6_600.png)  
+
+将标准的输出被重定向到`/dev/null`上，磁盘块长度4096字节，图中cpu时间几个最小值出现在buffersize为4096以及后的位置。  
+大多数文件系统为了改善性能，都采用某种预读(read ahead)技术，当检测到正进行顺序读时，系统就试图读入比应用要求更多的数据。  
+
+## 文件共享
