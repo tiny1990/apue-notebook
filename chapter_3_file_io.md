@@ -201,4 +201,20 @@ dup2 不完全等效于 close + fcntl 主要:
 - dup2 是原子操作
 - dup2 和 fcntl 的返回errno不同
 
+## 函数sync fsync fdatasync
+传统的UNIX系统实现在内核中设有缓冲区高速缓存或页面告诉缓存，大多数磁盘I/O都通过缓冲区进行。当我们向文件写入数据时，内核通常先将数据复制到缓冲区，然后排入队列，晚些时候写入磁盘，这种方式称为 延迟写(delayed write)  
+通常，内核需要重用缓冲区来放其他数据时，它会把所有延迟写的数据写入磁盘，为保证磁盘上实际文件和缓冲区一致性，UNIX提供了`sync`，`fsync`，`fdatasync`。  
+```c
+#include <unistd.h>
 
+int fsync(int fd);
+int fdatasync(int fd);
+
+/* Returns: 0 if OK, −1 on error */
+
+void sync(void);
+```
+
+`sync`: 将所有的修改过数据块缓冲区排入写队列返回，不等待实际写磁盘操作结束。  
+`fsync`: 只对由文件描述符fd指定的一个文件起作用，并且 等待写磁盘操作结束才返回。想数据库这种，需要确保修改落盘。
+`fdatasync`: 和`fsync`类似，但是只影响文件数据部分。`fsync`除数据，还更新文件属性。
